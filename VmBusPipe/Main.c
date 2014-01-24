@@ -84,6 +84,18 @@ int test_VmBusPipeHost(VmBusPipeHost* host)
 
 	if (status < 0)
 	{
+		DWORD dwIoControlCode = 0x3EC03C;
+
+		/**
+		 * Host: ERROR_INVALID_FUNCTION
+		 * DeviceIoControl is called with dwIoControlCode 0x3EC03C
+		 * 
+		 * DeviceType: 0x003E (FILE_DEVICE_VMBUS)
+		 * Access: 0x3
+		 * Function: 0xF
+		 * Method: 0
+		 */
+
 		printf("VmbusPipeServerOfferChannel: GetLastError() = %d\n", GetLastError());
 	}
 
