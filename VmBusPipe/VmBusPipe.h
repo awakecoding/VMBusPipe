@@ -124,7 +124,7 @@ typedef int (WINAPI * fnVmbusPipeClientUnregisterChannelNotification)(LPVOID arg
 
 typedef BOOL (WINAPI * fnVmbusPipeClientWaitChannel)(int arg1, int arg2, int arg3, UINT_PTR param);
 typedef BOOL (WINAPI * fnVmbusPipeServerConnectPipe)(HANDLE hDevice, LPOVERLAPPED lpOverlapped);
-typedef int (WINAPI * fnVmbusPipeServerOfferChannel)(void* arg1, DWORD dwFlagsAndAttributes, int arg3);
+typedef int (WINAPI * fnVmbusPipeServerOfferChannel)(void* arg1, DWORD dwFlagsAndAttributes, PHANDLE phChannel);
 
 struct _VmBusPipeHost
 {
