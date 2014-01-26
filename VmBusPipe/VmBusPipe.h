@@ -151,10 +151,18 @@ struct _VmBusPipeGuest
 };
 typedef struct _VmBusPipeGuest VmBusPipeGuest;
 
-VmBusPipeHost* VmBusPipeHostInit();
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+VmBusPipeHost* VmBusPipeHostInit(const char* filename);
 void VmBusPipeHostFree(VmBusPipeHost* host);
 
-VmBusPipeGuest* VmBusPipeGuestInit();
+VmBusPipeGuest* VmBusPipeGuestInit(const char* filename);
 void VmBusPipeGuestFree(VmBusPipeGuest* guest);
 
+#ifdef __cplusplus
+}
 #endif
+
+#endif /* VMBUS_PIPE_H */

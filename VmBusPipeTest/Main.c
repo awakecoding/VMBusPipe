@@ -5,7 +5,7 @@
 
 #include <windows.h>
 
-#include "VmBusPipe.h"
+#include <VmBusPipe.h>
 
 // {f9e9c0d3-b511-4a48-8046-d38079a8830c} "Microsoft Hyper-V Remote Desktop Data Channel"
 DEFINE_GUID(GUID_VMBUS_RDP_DATA_CHANNEL, 0xf9e9c0d3, 0xb511, 0x4a48, 0x80, 0x46, 0xd3, 0x80, 0x79, 0xa8, 0x83, 0x0c);
@@ -223,6 +223,28 @@ int test_VmBusPipeHost(VmBusPipeHost* host)
 	return 0;
 }
 
+char* BinToHexString(BYTE* data, int length)
+{
+	int i;
+	char* p;
+	int ln, hn;
+	char bin2hex[] = "0123456789ABCDEF";
+
+	p = (char*) malloc((length + 1) * 2);
+
+	for (i = 0; i < length; i++)
+	{
+		ln = data[i] & 0xF;
+		hn = (data[i] >> 4) & 0xF;
+		p[i * 2] = bin2hex[hn];
+		p[(i * 2) + 1] = bin2hex[ln];
+	}
+
+	p[length * 2] = '\0';
+
+	return p;
+}
+
 int test_VmBusPipeGuest(VmBusPipeGuest* guest)
 {
 	int status;
@@ -294,9 +316,15 @@ int main(int argc, char** argv)
 	VmBusPipeHost* host;
 	VmBusPipeGuest* guest;
 
+	VMBUS_PIPE_CHANNEL_INFO* pChannelInfo;
+	pChannelInfo = (VMBUS_PIPE_CHANNEL_INFO*) malloc(sizeof(VMBUS_PIPE_CHANNEL_INFO));
+	ZeroMemory(pChannelInfo, sizeof(VMBUS_PIPE_CHANNEL_INFO));
+
+	printf("test: %s\n", BinToHexString((BYTE*) pChannelInfo, sizeof(VMBUS_PIPE_CHANNEL_INFO)));
+
 	bGuestMode = FALSE;
-	host = VmBusPipeHostInit();
-	guest = VmBusPipeGuestInit();
+	host = VmBusPipeHostInit(NULL);
+	guest = VmBusPipeGuestInit(NULL);
 
 	if (argc > 1)
 	{

@@ -1,0 +1,2 @@
+2014/01/25 21:02:33: DllMain: C:\Windows\system32\svchost.exe, fdwReason: 1
+2014/01/25 21:02:33: VmbusPipeClientEnumeratePipes: ClassGuid: {276AACF4-AC15-426C-98DD-7521AD3F01FE} flags: 0xC80D8EA0 pfn: 00007FFF77F8CDBC bSuccess: 1

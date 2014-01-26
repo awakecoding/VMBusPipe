@@ -4,12 +4,12 @@
 
 #include "VmBusPipe.h"
 
-VmBusPipeHost* VmBusPipeHostInit()
+VmBusPipeHost* VmBusPipeHostInit(const char* filename)
 {
 	HMODULE hModule;
 	VmBusPipeHost* host;
 
-	hModule = LoadLibraryA("vmbuspiper.dll");
+	hModule = LoadLibraryA(filename ? filename : "vmbuspiper.dll");
 
 	if (!hModule)
 	{

@@ -1,7 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VmBusPipe", "VmBusPipe\VmBusPipe.vcxproj", "{693D3656-7C1B-4FFE-9EDE-10745F2BE291}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VmBusPipeTest", "VmBusPipeTest\VmBusPipeTest.vcxproj", "{693D3656-7C1B-4FFE-9EDE-10745F2BE291}"
+	ProjectSection(ProjectDependencies) = postProject
+		{5DCF0830-3733-4DF9-96E8-24AFA0B6D21C} = {5DCF0830-3733-4DF9-96E8-24AFA0B6D21C}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VmBusPipeStub", "VmBusPipeStub\VmBusPipeStub.vcxproj", "{008D9457-1B7D-49D9-8CF3-8A24A692E465}"
+	ProjectSection(ProjectDependencies) = postProject
+		{5DCF0830-3733-4DF9-96E8-24AFA0B6D21C} = {5DCF0830-3733-4DF9-96E8-24AFA0B6D21C}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VmBusPipe", "VmBusPipe\VmBusPipe.vcxproj", "{5DCF0830-3733-4DF9-96E8-24AFA0B6D21C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,6 +35,30 @@ Global
 		{693D3656-7C1B-4FFE-9EDE-10745F2BE291}.Release|Win32.Build.0 = Debug|x64
 		{693D3656-7C1B-4FFE-9EDE-10745F2BE291}.Release|x64.ActiveCfg = Release|x64
 		{693D3656-7C1B-4FFE-9EDE-10745F2BE291}.Release|x64.Build.0 = Release|x64
+		{008D9457-1B7D-49D9-8CF3-8A24A692E465}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{008D9457-1B7D-49D9-8CF3-8A24A692E465}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{008D9457-1B7D-49D9-8CF3-8A24A692E465}.Debug|Win32.ActiveCfg = Debug|Win32
+		{008D9457-1B7D-49D9-8CF3-8A24A692E465}.Debug|Win32.Build.0 = Debug|Win32
+		{008D9457-1B7D-49D9-8CF3-8A24A692E465}.Debug|x64.ActiveCfg = Debug|x64
+		{008D9457-1B7D-49D9-8CF3-8A24A692E465}.Debug|x64.Build.0 = Debug|x64
+		{008D9457-1B7D-49D9-8CF3-8A24A692E465}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{008D9457-1B7D-49D9-8CF3-8A24A692E465}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{008D9457-1B7D-49D9-8CF3-8A24A692E465}.Release|Win32.ActiveCfg = Release|Win32
+		{008D9457-1B7D-49D9-8CF3-8A24A692E465}.Release|Win32.Build.0 = Release|Win32
+		{008D9457-1B7D-49D9-8CF3-8A24A692E465}.Release|x64.ActiveCfg = Release|x64
+		{008D9457-1B7D-49D9-8CF3-8A24A692E465}.Release|x64.Build.0 = Release|x64
+		{5DCF0830-3733-4DF9-96E8-24AFA0B6D21C}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{5DCF0830-3733-4DF9-96E8-24AFA0B6D21C}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{5DCF0830-3733-4DF9-96E8-24AFA0B6D21C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5DCF0830-3733-4DF9-96E8-24AFA0B6D21C}.Debug|Win32.Build.0 = Debug|Win32
+		{5DCF0830-3733-4DF9-96E8-24AFA0B6D21C}.Debug|x64.ActiveCfg = Debug|x64
+		{5DCF0830-3733-4DF9-96E8-24AFA0B6D21C}.Debug|x64.Build.0 = Debug|x64
+		{5DCF0830-3733-4DF9-96E8-24AFA0B6D21C}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{5DCF0830-3733-4DF9-96E8-24AFA0B6D21C}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{5DCF0830-3733-4DF9-96E8-24AFA0B6D21C}.Release|Win32.ActiveCfg = Release|Win32
+		{5DCF0830-3733-4DF9-96E8-24AFA0B6D21C}.Release|Win32.Build.0 = Release|Win32
+		{5DCF0830-3733-4DF9-96E8-24AFA0B6D21C}.Release|x64.ActiveCfg = Release|x64
+		{5DCF0830-3733-4DF9-96E8-24AFA0B6D21C}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

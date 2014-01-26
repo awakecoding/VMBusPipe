@@ -1,0 +1,10 @@
+LIBRARY			"VmBusPipeStub"
+EXPORTS
+	VmbusPipeClientEnumeratePipes
+	VmbusPipeClientOpenChannel
+	VmbusPipeClientReadyForChannelNotification
+	VmbusPipeClientRegisterChannelNotification
+	VmbusPipeClientUnregisterChannelNotification
+	VmbusPipeClientWaitChannel
+	VmbusPipeServerConnectPipe
+	VmbusPipeServerOfferChannel

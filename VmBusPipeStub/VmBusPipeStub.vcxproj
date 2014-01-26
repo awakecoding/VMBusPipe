@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{5DCF0830-3733-4DF9-96E8-24AFA0B6D21C}</ProjectGuid>
+    <ProjectGuid>{008D9457-1B7D-49D9-8CF3-8A24A692E465}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>VmBusPipeStub</RootNamespace>
   </PropertyGroup>
@@ -44,7 +44,7 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v110</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -77,7 +77,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>vmbuspipe</TargetName>
+    <TargetName>$(ProjectName)</TargetName>
     <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -134,10 +134,10 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;VmBusPipeStub_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeaderFile />
       <AdditionalIncludeDirectories>../VmBusPipe</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -145,15 +145,19 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <ModuleDefinitionFile>VmBusPipeStub.def</ModuleDefinitionFile>
+      <AdditionalDependencies>..\x64\Release\vmbuspipe.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="VmBusPipe.c" />
-    <ClCompile Include="VmBusPipeGuest.c" />
-    <ClCompile Include="VmBusPipeHost.c" />
+    <ClCompile Include="Helpers.cpp" />
+    <ClCompile Include="VmBusPipeStub.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="VmBusPipe.h" />
+    <ClInclude Include="Helpers.h" />
+    <ClInclude Include="VmBusPipeStub.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="VmBusPipeStub.def" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
