@@ -7,17 +7,29 @@
 
 #include <VmBusPipe.h>
 
+struct _VmBusPipeContext
+{
+	BOOL bGuestMode;
+	VmBusPipeHost* host;
+	VmBusPipeGuest* guest;
+};
+typedef struct _VmBusPipeContext VmBusPipeContext;
+
+static VmBusPipeContext* g_VmBusPipeContext;
+
 // {f9e9c0d3-b511-4a48-8046-d38079a8830c} "Microsoft Hyper-V Remote Desktop Data Channel"
-DEFINE_GUID(GUID_VMBUS_RDP_DATA_CHANNEL, 0xf9e9c0d3, 0xb511, 0x4a48, 0x80, 0x46, 0xd3, 0x80, 0x79, 0xa8, 0x83, 0x0c);
+DEFINE_GUID(GUID_VMBUS_REMOTE_DESKTOP_DATA_CHANNEL, 0xf9e9c0d3, 0xb511, 0x4a48, 0x80, 0x46, 0xd3, 0x80, 0x79, 0xa8, 0x83, 0x0c);
+
+// {276aacf4-ac15-426c-98dd-7521ad3f01fe} "Microsoft Hyper-V Remote Desktop Virtualization"
+DEFINE_GUID(GUID_VMBUS_REMOTE_DESKTOP_VIRTUALIZATION, 0x276aacf4, 0xac15, 0x426c, 0x98, 0xdd, 0x75, 0x21, 0xad, 0x3f, 0x01, 0xfe);
+
+// {57164f39-9115-4e78-ab55-382f3bd5422d} "Microsoft Hyper-V Heartbeat"
+DEFINE_GUID(GUID_VMBUS_HEARTBEAT, 0x57164f39, 0x9115, 0x4e78, 0xab, 0x55, 0x38, 0x2f, 0x3b, 0xd5, 0x42, 0x2d);
 
 // {1DAE6E2C-D5EF-4085-8C3C-00FC462F181A}
 DEFINE_GUID(GUID_VMBUS_PIPE_TEST, 0x1dae6e2c, 0xd5ef, 0x4085, 0x8c, 0x3c, 0x0, 0xfc, 0x46, 0x2f, 0x18, 0x1a);
 
-static BYTE RdvVmEndPointInstanceGuidUnifiedApi[16] =
-	"\xCE\x7C\xE2\xAB\x02\x0E\x97\x41\x8E\x45\x5E\x92\x12\x4E\x1C\x2A";
-
-static BYTE RdvVmEndPointInstanceGuidAllowList[16] =
-	"\x67\x97\x16\x6E\xF8\x53\xB7\x49\xBF\xE1\xB4\x99\x16\x80\x57\xC4";
+//DEFINE_GUID(GUID_VMBUS_, 0x, 0x, 0x, 0x, 0x, 0x, 0x, 0x, 0x, 0x, 0x);
 
 void HexDump(BYTE* data, int length)
 {
@@ -159,9 +171,11 @@ int ConvertFromUnicode(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int 
 
 void VmbusPipeClientEnumeratePipe(void* pContext, BYTE* pUserDefined, PVMBUS_DEVICE_INTERFACE_DETAIL_DATA pDeviceInterfaceDetailData, char* arg4)
 {
+	HANDLE hChannel;
 	char* VmBusStringA = NULL;
 	WCHAR* VmBusStringW = NULL;
 	char* pUserDefinedString = NULL;
+	VmBusPipeContext* vmbus = (VmBusPipeContext*) pContext;
 
 	/**
 	 * pUserDefined: 116-byte UserDefined registry key
@@ -186,6 +200,17 @@ void VmbusPipeClientEnumeratePipe(void* pContext, BYTE* pUserDefined, PVMBUS_DEV
 
 	free(pUserDefinedString);
 	free(VmBusStringA);
+
+	if (vmbus->bGuestMode)
+	{
+		hChannel = vmbus->guest->VmbusPipeClientOpenChannel(pDeviceInterfaceDetailData, 0x40000000);
+	}
+	else
+	{
+		hChannel = vmbus->host->VmbusPipeClientOpenChannel(pDeviceInterfaceDetailData, 0x40000000);
+	}
+
+	printf("VmbusPipeClientOpenChannel: 0x%04X\n", hChannel);
 }
 
 int test_VmBusPipeHost(VmBusPipeHost* host)
@@ -207,7 +232,8 @@ int test_VmBusPipeHost(VmBusPipeHost* host)
 	ZeroMemory(pDeviceInterfaceDetailData, sizeof(VMBUS_DEVICE_INTERFACE_DETAIL_DATA));
 	pDeviceInterfaceDetailData->cbSize = 8;
 
-	bSuccess = host->VmbusPipeClientEnumeratePipes(&GUID_VMBUS_RDP_DATA_CHANNEL, 0, VmbusPipeClientEnumeratePipe);
+	bSuccess = host->VmbusPipeClientEnumeratePipes(&GUID_VMBUS_REMOTE_DESKTOP_VIRTUALIZATION,
+		g_VmBusPipeContext, VmbusPipeClientEnumeratePipe);
 
 	printf("VmbusPipeClientEnumeratePipes: %d\n", bSuccess);
 
@@ -259,13 +285,15 @@ int test_VmBusPipeGuest(VmBusPipeGuest* guest)
 	ZeroMemory(pDeviceInterfaceDetailData, sizeof(VMBUS_DEVICE_INTERFACE_DETAIL_DATA));
 	pDeviceInterfaceDetailData->cbSize = 8;
 
-	bSuccess = guest->VmbusPipeClientEnumeratePipes(&GUID_VMBUS_RDP_DATA_CHANNEL, 0, VmbusPipeClientEnumeratePipe);
+	bSuccess = guest->VmbusPipeClientEnumeratePipes(&GUID_VMBUS_REMOTE_DESKTOP_VIRTUALIZATION,
+		g_VmBusPipeContext, VmbusPipeClientEnumeratePipe);
 
 	printf("VmbusPipeClientEnumeratePipes: %d\n", bSuccess);
 
 	dwFlagsAndAttributes = 0;
 	hChannel = NULL;
 
+#if 0
 	/**
 	 * CreateFile dwFlagsAndAttributes:
 	 * http://msdn.microsoft.com/en-us/library/windows/desktop/aa363858/
@@ -288,12 +316,7 @@ int test_VmBusPipeGuest(VmBusPipeGuest* guest)
 
 		printf("VmbusPipeServerOfferChannel: GetLastError() = %d\n", GetLastError());
 	}
-
-	hChannel = guest->VmbusPipeClientOpenChannel(pDeviceInterfaceDetailData, 0x40000000);
-
-	printf("VmbusPipeClientOpenChannel: 0x%04X\n", hChannel);
-
-	free(pDeviceInterfaceDetailData);
+#endif
 
 	return 0;
 }
@@ -315,6 +338,11 @@ int main(int argc, char** argv)
 			bGuestMode = TRUE;
 		}
 	}
+
+	g_VmBusPipeContext = (VmBusPipeContext*) malloc(sizeof(VmBusPipeContext));
+	g_VmBusPipeContext->bGuestMode = bGuestMode;
+	g_VmBusPipeContext->host = host;
+	g_VmBusPipeContext->guest = guest;
 
 	if (host && !bGuestMode)
 	{

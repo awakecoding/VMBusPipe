@@ -56,7 +56,7 @@ BOOL VmbusPipeClientEnumeratePipes(const GUID* ClassGuid, void* pContext, fnVmbu
 
 	bSuccess = guest->VmbusPipeClientEnumeratePipes(ClassGuid, pContext, pfn);
 
-	log.Write("VmbusPipeClientEnumeratePipes: ClassGuid: {%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X} pContext: %p pfn: %p bSuccess: %d",
+	log.Write("VmbusPipeClientEnumeratePipes: ClassGuid: {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x} pContext: %p pfn: %p bSuccess: %d",
 		ClassGuid->Data1, ClassGuid->Data2, ClassGuid->Data3,
 		ClassGuid->Data4[0], ClassGuid->Data4[1],
 		ClassGuid->Data4[2], ClassGuid->Data4[3], ClassGuid->Data4[4],
@@ -155,7 +155,7 @@ BOOL VmbusPipeServerConnectPipe(HANDLE hDevice, LPOVERLAPPED lpOverlapped)
 	return bSuccess;
 }
 
-int VmbusPipeServerOfferChannel(void* arg1, DWORD dwFlagsAndAttributes, PHANDLE phChannel)
+int VmbusPipeServerOfferChannel(PVMBUS_DEVICE_INTERFACE_DETAIL_DATA pDeviceInterfaceDetailData, DWORD dwFlagsAndAttributes, PHANDLE phChannel)
 {
 	int status;
 
@@ -164,7 +164,7 @@ int VmbusPipeServerOfferChannel(void* arg1, DWORD dwFlagsAndAttributes, PHANDLE 
 	if (!guest || !guest->VmbusPipeServerOfferChannel)
 		return -1;
 
-	status = guest->VmbusPipeServerOfferChannel(arg1, dwFlagsAndAttributes, phChannel);
+	status = guest->VmbusPipeServerOfferChannel(pDeviceInterfaceDetailData, dwFlagsAndAttributes, phChannel);
 
 	return status;
 }
