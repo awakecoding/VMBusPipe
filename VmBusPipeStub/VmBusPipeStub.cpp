@@ -9,50 +9,82 @@ static VmBusPipeGuest* guest = NULL;
 extern "C" {
 #endif
 
-BOOL VmbusPipeClientEnumeratePipes(const GUID* ClassGuid, DWORD flags, void* pfn)
+static fnVmbusPipeClientEnumeratePipe pfnVmbusPipeClientEnumeratePipe = NULL;
+
+void VmbusPipeClientEnumeratePipe(void* pContext, BYTE* pUserDefined, PVMBUS_DEVICE_INTERFACE_DETAIL_DATA pDeviceInterfaceDetailData, char* arg4)
+{
+	char* VmBusStringA = NULL;
+	WCHAR* VmBusStringW = NULL;
+	char* pUserDefinedString = NULL;
+
+	/**
+	 * pUserDefined: 116-byte UserDefined registry key
+	 *
+	 * pDeviceInterfaceDetailData: pointer to SP_DEVICE_INTERFACE_DETAIL_DATA (526-byte)
+	 * http://msdn.microsoft.com/en-us/library/windows/hardware/ff552343/
+	 */
+
+	log.Write("VmbusPipeClientEnumeratePipe: pContext: %p", pContext);
+
+	pUserDefinedString = BinToHexString(pUserDefined, 116);
+
+	log.Write("\tpUserDefined: %s", pUserDefinedString);
+
+	VmBusStringW = (WCHAR*) pDeviceInterfaceDetailData->DevicePath;
+	ConvertFromUnicode(CP_UTF8, 0, VmBusStringW, -1, &VmBusStringA, 0, NULL, NULL);
+
+	log.Write("\tpDeviceInterfaceDetailData: cbSize: %d DevicePath: %s",
+		pDeviceInterfaceDetailData->cbSize, VmBusStringA);
+
+	log.Write("\targ4: %p", arg4);
+
+	pfnVmbusPipeClientEnumeratePipe(pContext, pUserDefined, pDeviceInterfaceDetailData, arg4);
+
+	free(pUserDefinedString);
+	free(VmBusStringA);
+}
+
+BOOL VmbusPipeClientEnumeratePipes(const GUID* ClassGuid, void* pContext, fnVmbusPipeClientEnumeratePipe pfn)
 {
 	BOOL bSuccess;
+
+	pfnVmbusPipeClientEnumeratePipe = (fnVmbusPipeClientEnumeratePipe) pfn;
+	pfn = VmbusPipeClientEnumeratePipe;
 
 	if (!guest || !guest->VmbusPipeClientEnumeratePipes)
 		return FALSE;
 
-	bSuccess = guest->VmbusPipeClientEnumeratePipes(ClassGuid, flags, pfn);
+	bSuccess = guest->VmbusPipeClientEnumeratePipes(ClassGuid, pContext, pfn);
 
-	log.Write("VmbusPipeClientEnumeratePipes: ClassGuid: {%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X} flags: 0x%04X pfn: %p bSuccess: %d",
+	log.Write("VmbusPipeClientEnumeratePipes: ClassGuid: {%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X} pContext: %p pfn: %p bSuccess: %d",
 		ClassGuid->Data1, ClassGuid->Data2, ClassGuid->Data3,
 		ClassGuid->Data4[0], ClassGuid->Data4[1],
 		ClassGuid->Data4[2], ClassGuid->Data4[3], ClassGuid->Data4[4],
 		ClassGuid->Data4[5], ClassGuid->Data4[6], ClassGuid->Data4[7],
-		flags, pfn, bSuccess);
+		pContext, pfn, bSuccess);
 
 	return bSuccess;
 }
 
-HANDLE VmbusPipeClientOpenChannel(void* arg1, int arg2)
+HANDLE VmbusPipeClientOpenChannel(PVMBUS_DEVICE_INTERFACE_DETAIL_DATA pDeviceInterfaceDetailData, DWORD flags)
 {
-	char* hexstr;
 	HANDLE hChannel;
-	char* VmBusStringA;
-	WCHAR* VmBusStringW;
-	UINT32 unknownFlags;
+	char* VmBusStringA = NULL;
+	WCHAR* VmBusStringW = NULL;
 
 	if (!guest || !guest->VmbusPipeClientOpenChannel)
 		return INVALID_HANDLE_VALUE;
 
-	hexstr = BinToHexString((BYTE*) arg1, 526);
+	hChannel = guest->VmbusPipeClientOpenChannel(pDeviceInterfaceDetailData, flags);
 
-	hChannel = guest->VmbusPipeClientOpenChannel(arg1, arg2);
-
-	unknownFlags = *((UINT32*) arg1);
-
-	VmBusStringW = (WCHAR*) (((BYTE*) arg1) + 4);
+	VmBusStringW = (WCHAR*) pDeviceInterfaceDetailData->DevicePath;
 	ConvertFromUnicode(CP_UTF8, 0, VmBusStringW, -1, &VmBusStringA, 0, NULL, NULL);
 
-	log.Write("VmbusPipeClientOpenChannel: flags: 0x%04X pChannelData: %s", arg2, hexstr);
-	log.Write("VmbusPipeClientOpenChannel: unknownFlags: 0x%04X String: %s", unknownFlags, VmBusStringA);
+	log.Write("VmbusPipeClientOpenChannel: pDeviceInterfaceDetailData: cbSize: %d DevicePath: %s",
+		pDeviceInterfaceDetailData->cbSize, VmBusStringA);
+	log.Write("VmbusPipeClientOpenChannel: flags: 0x%04X", flags);
 
 	free(VmBusStringA);
-	free(hexstr);
 
 	return hChannel;
 }

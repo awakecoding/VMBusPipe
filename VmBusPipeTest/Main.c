@@ -49,6 +49,28 @@ void HexDump(BYTE* data, int length)
 	}
 }
 
+char* BinToHexString(BYTE* data, int length)
+{
+	int i;
+	char* p;
+	int ln, hn;
+	char bin2hex[] = "0123456789abcdef";
+
+	p = (char*) malloc((length + 1) * 2);
+
+	for (i = 0; i < length; i++)
+	{
+		ln = data[i] & 0xF;
+		hn = (data[i] >> 4) & 0xF;
+		p[i * 2] = bin2hex[hn];
+		p[(i * 2) + 1] = bin2hex[ln];
+	}
+
+	p[length * 2] = '\0';
+
+	return p;
+}
+
 int ConvertToUnicode(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
                 int cbMultiByte, LPWSTR* lpWideCharStr, int cchWideChar)
 {
@@ -135,42 +157,35 @@ int ConvertFromUnicode(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int 
         return status;
 }
 
-void VmbusPipeClientEnumeratePipe(DWORD arg1, BYTE* arg2, int* arg3, char* arg4)
+void VmbusPipeClientEnumeratePipe(void* pContext, BYTE* pUserDefined, PVMBUS_DEVICE_INTERFACE_DETAIL_DATA pDeviceInterfaceDetailData, char* arg4)
 {
-	int length;
-	char* VmBusStringA;
-	WCHAR* VmBusStringW;
-
-	printf("VmbusPipeClientEnumeratePipe: arg1: 0x%04X arg2: %p arg3: %p arg4: %p\n", arg1, arg2, arg3, arg4);
+	char* VmBusStringA = NULL;
+	WCHAR* VmBusStringW = NULL;
+	char* pUserDefinedString = NULL;
 
 	/**
-	 * arg1: observed value 0
-	 * possibly the index in the pipe array
+	 * pUserDefined: 116-byte UserDefined registry key
+	 *
+	 * pDeviceInterfaceDetailData: pointer to SP_DEVICE_INTERFACE_DETAIL_DATA (526-byte)
+	 * http://msdn.microsoft.com/en-us/library/windows/hardware/ff552343/
 	 */
 
-	/**
-	 * Unknown buffer
-	 */
+	printf("VmbusPipeClientEnumeratePipe: pContext: %p\n", pContext);
 
-	//printf("arg2:\n");
-	//HexDump((BYTE*) arg2, 16 * 8);
+	pUserDefinedString = BinToHexString(pUserDefined, 116);
 
-	/**
-	 * First 4 bytes: 80 00 00 00
-	 * Following bytes is:
-	 * \\?\vmbus#
-	 * {f9e9c0d3-b511-4a48-8046-d38079a8830c}#
-	 * {99221fa3-24ad-11e2-be98-001aa01bbf6e}#
-	 * {f9e9c0d3-b511-4a48-8046-d38079a8830c}
-	 */
-	VmBusStringW = (WCHAR*) (arg3 + 1);
+	printf("\tpUserDefined: %s\n", pUserDefinedString);
+
+	VmBusStringW = (WCHAR*) pDeviceInterfaceDetailData->DevicePath;
 	ConvertFromUnicode(CP_UTF8, 0, VmBusStringW, -1, &VmBusStringA, 0, NULL, NULL);
 
-	printf("arg3: 0x%04X / %s\n", *arg3, VmBusStringA);
+	printf("\tpDeviceInterfaceDetailData: cbSize: %d DevicePath: %s\n",
+		pDeviceInterfaceDetailData->cbSize, VmBusStringA);
 
-	length = (int) strlen(arg4);
-	printf("arg4: (length = %d)\n", length);
-	HexDump((BYTE*) arg4, length);
+	printf("\targ4: %p\n", arg4);
+
+	free(pUserDefinedString);
+	free(VmBusStringA);
 }
 
 int test_VmBusPipeHost(VmBusPipeHost* host)
@@ -179,7 +194,7 @@ int test_VmBusPipeHost(VmBusPipeHost* host)
 	BOOL bSuccess;
 	HANDLE hChannel;
 	DWORD dwFlagsAndAttributes;
-	VMBUS_PIPE_CHANNEL_INFO* pChannelInfo;
+	PVMBUS_DEVICE_INTERFACE_DETAIL_DATA pDeviceInterfaceDetailData;
 
 	printf("VmBusPipeHost: %d\n", host ? 1 : 0);
 
@@ -188,18 +203,18 @@ int test_VmBusPipeHost(VmBusPipeHost* host)
 	 * VmbusPipeServerConnectPipe
 	 */ 
 
-	pChannelInfo = (VMBUS_PIPE_CHANNEL_INFO*) malloc(sizeof(VMBUS_PIPE_CHANNEL_INFO));
-	ZeroMemory(pChannelInfo, sizeof(VMBUS_PIPE_CHANNEL_INFO));
+	pDeviceInterfaceDetailData = (PVMBUS_DEVICE_INTERFACE_DETAIL_DATA) malloc(sizeof(VMBUS_DEVICE_INTERFACE_DETAIL_DATA));
+	ZeroMemory(pDeviceInterfaceDetailData, sizeof(VMBUS_DEVICE_INTERFACE_DETAIL_DATA));
+	pDeviceInterfaceDetailData->cbSize = 8;
 
 	bSuccess = host->VmbusPipeClientEnumeratePipes(&GUID_VMBUS_RDP_DATA_CHANNEL, 0, VmbusPipeClientEnumeratePipe);
 
 	printf("VmbusPipeClientEnumeratePipes: %d\n", bSuccess);
 
-	pChannelInfo->flags3A = 0x1000;
 	dwFlagsAndAttributes = 0;
 	hChannel = NULL;
 
-	status = host->VmbusPipeServerOfferChannel(pChannelInfo, dwFlagsAndAttributes, &hChannel);
+	status = host->VmbusPipeServerOfferChannel(pDeviceInterfaceDetailData, dwFlagsAndAttributes, &hChannel);
 
 	printf("VmbusPipeServerOfferChannel: %d\n", status);
 
@@ -223,35 +238,13 @@ int test_VmBusPipeHost(VmBusPipeHost* host)
 	return 0;
 }
 
-char* BinToHexString(BYTE* data, int length)
-{
-	int i;
-	char* p;
-	int ln, hn;
-	char bin2hex[] = "0123456789ABCDEF";
-
-	p = (char*) malloc((length + 1) * 2);
-
-	for (i = 0; i < length; i++)
-	{
-		ln = data[i] & 0xF;
-		hn = (data[i] >> 4) & 0xF;
-		p[i * 2] = bin2hex[hn];
-		p[(i * 2) + 1] = bin2hex[ln];
-	}
-
-	p[length * 2] = '\0';
-
-	return p;
-}
-
 int test_VmBusPipeGuest(VmBusPipeGuest* guest)
 {
 	int status;
 	BOOL bSuccess;
 	HANDLE hChannel;
 	DWORD dwFlagsAndAttributes;
-	VMBUS_PIPE_CHANNEL_INFO* pChannelInfo;
+	PVMBUS_DEVICE_INTERFACE_DETAIL_DATA pDeviceInterfaceDetailData;
 
 	printf("VmBusPipeGuest: %d\n", guest ? 1 : 0);
 
@@ -262,14 +255,14 @@ int test_VmBusPipeGuest(VmBusPipeGuest* guest)
 	 * VmbusPipeClientEnumeratePipes
 	 */ 
 
-	pChannelInfo = (VMBUS_PIPE_CHANNEL_INFO*) malloc(sizeof(VMBUS_PIPE_CHANNEL_INFO));
-	ZeroMemory(pChannelInfo, sizeof(VMBUS_PIPE_CHANNEL_INFO));
+	pDeviceInterfaceDetailData = (PVMBUS_DEVICE_INTERFACE_DETAIL_DATA) malloc(sizeof(VMBUS_DEVICE_INTERFACE_DETAIL_DATA));
+	ZeroMemory(pDeviceInterfaceDetailData, sizeof(VMBUS_DEVICE_INTERFACE_DETAIL_DATA));
+	pDeviceInterfaceDetailData->cbSize = 8;
 
 	bSuccess = guest->VmbusPipeClientEnumeratePipes(&GUID_VMBUS_RDP_DATA_CHANNEL, 0, VmbusPipeClientEnumeratePipe);
 
 	printf("VmbusPipeClientEnumeratePipes: %d\n", bSuccess);
 
-	pChannelInfo->flags3A = 0x1000;
 	dwFlagsAndAttributes = 0;
 	hChannel = NULL;
 
@@ -279,7 +272,7 @@ int test_VmBusPipeGuest(VmBusPipeGuest* guest)
 	 * FILE_FLAG_POSIX_SEMANTICS (0x0100000) is added
 	 */
 
-	status = guest->VmbusPipeServerOfferChannel(pChannelInfo, dwFlagsAndAttributes, &hChannel);
+	status = guest->VmbusPipeServerOfferChannel(pDeviceInterfaceDetailData, dwFlagsAndAttributes, &hChannel);
 
 	printf("VmbusPipeServerOfferChannel: %d\n", status);
 
@@ -296,16 +289,11 @@ int test_VmBusPipeGuest(VmBusPipeGuest* guest)
 		printf("VmbusPipeServerOfferChannel: GetLastError() = %d\n", GetLastError());
 	}
 
-	/**
-	 * First argument is a 526-byte structure
-	 * Second argument is a set of flags, with an observed value of 0x40000000
-	 */
-
-	hChannel = guest->VmbusPipeClientOpenChannel(pChannelInfo, 0x40000000);
+	hChannel = guest->VmbusPipeClientOpenChannel(pDeviceInterfaceDetailData, 0x40000000);
 
 	printf("VmbusPipeClientOpenChannel: 0x%04X\n", hChannel);
 
-	free(pChannelInfo);
+	free(pDeviceInterfaceDetailData);
 
 	return 0;
 }
@@ -315,12 +303,6 @@ int main(int argc, char** argv)
 	BOOL bGuestMode;
 	VmBusPipeHost* host;
 	VmBusPipeGuest* guest;
-
-	VMBUS_PIPE_CHANNEL_INFO* pChannelInfo;
-	pChannelInfo = (VMBUS_PIPE_CHANNEL_INFO*) malloc(sizeof(VMBUS_PIPE_CHANNEL_INFO));
-	ZeroMemory(pChannelInfo, sizeof(VMBUS_PIPE_CHANNEL_INFO));
-
-	printf("test: %s\n", BinToHexString((BYTE*) pChannelInfo, sizeof(VMBUS_PIPE_CHANNEL_INFO)));
 
 	bGuestMode = FALSE;
 	host = VmBusPipeHostInit(NULL);

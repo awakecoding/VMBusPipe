@@ -114,9 +114,19 @@ struct _VMBUS_PIPE_CHANNEL_INFO
 };
 typedef struct _VMBUS_PIPE_CHANNEL_INFO VMBUS_PIPE_CHANNEL_INFO;
 
-typedef void (WINAPI * fnVmbusPipeClientEnumeratePipe)(DWORD arg1, BYTE* arg2, int* arg3, char* arg4);
-typedef BOOL (WINAPI * fnVmbusPipeClientEnumeratePipes)(const GUID* ClassGuid, DWORD flags, void* pfn);
-typedef HANDLE (WINAPI * fnVmbusPipeClientOpenChannel)(void* arg1, int arg2);
+/* Based on SP_DEVICE_INTERFACE_DETAIL_DATA */
+
+struct _VMBUS_DEVICE_INTERFACE_DETAIL_DATA
+{
+	DWORD cbSize;
+	WCHAR DevicePath[260 + 1];
+};
+typedef struct _VMBUS_DEVICE_INTERFACE_DETAIL_DATA VMBUS_DEVICE_INTERFACE_DETAIL_DATA;
+typedef struct _VMBUS_DEVICE_INTERFACE_DETAIL_DATA* PVMBUS_DEVICE_INTERFACE_DETAIL_DATA;
+
+typedef void (WINAPI * fnVmbusPipeClientEnumeratePipe)(void* pContext, BYTE* pUserDefined, PVMBUS_DEVICE_INTERFACE_DETAIL_DATA pDeviceInterfaceDetailData, char* arg4);
+typedef BOOL (WINAPI * fnVmbusPipeClientEnumeratePipes)(const GUID* ClassGuid, void* pContext, fnVmbusPipeClientEnumeratePipe pfn);
+typedef HANDLE (WINAPI * fnVmbusPipeClientOpenChannel)(PVMBUS_DEVICE_INTERFACE_DETAIL_DATA pDeviceInterfaceDetailData, DWORD flags);
 
 typedef void (WINAPI * fnVmbusPipeClientReadyForChannelNotification)(void* arg1, int flags);
 typedef LPVOID (WINAPI * fnVmbusPipeClientRegisterChannelNotification)(void* arg1, void* arg2, int arg3, int arg4, int arg5);
