@@ -13,7 +13,7 @@ struct _VMBUS_DEVICE_INTERFACE_DETAIL_DATA
 typedef struct _VMBUS_DEVICE_INTERFACE_DETAIL_DATA VMBUS_DEVICE_INTERFACE_DETAIL_DATA;
 typedef struct _VMBUS_DEVICE_INTERFACE_DETAIL_DATA* PVMBUS_DEVICE_INTERFACE_DETAIL_DATA;
 
-typedef void (WINAPI * fnVmbusPipeClientEnumeratePipe)(void* pContext, BYTE* pUserDefined, PVMBUS_DEVICE_INTERFACE_DETAIL_DATA pDeviceInterfaceDetailData, char* arg4);
+typedef void (CALLBACK * fnVmbusPipeClientEnumeratePipe)(void* pContext, BYTE* pUserDefined, PVMBUS_DEVICE_INTERFACE_DETAIL_DATA pDeviceInterfaceDetailData, char* arg4);
 typedef BOOL (WINAPI * fnVmbusPipeClientEnumeratePipes)(const GUID* ClassGuid, void* pContext, fnVmbusPipeClientEnumeratePipe pfn);
 typedef HANDLE (WINAPI * fnVmbusPipeClientOpenChannel)(PVMBUS_DEVICE_INTERFACE_DETAIL_DATA pDeviceInterfaceDetailData, DWORD flags);
 

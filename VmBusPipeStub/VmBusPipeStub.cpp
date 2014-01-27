@@ -11,7 +11,7 @@ extern "C" {
 
 static fnVmbusPipeClientEnumeratePipe pfnVmbusPipeClientEnumeratePipe = NULL;
 
-void VmbusPipeClientEnumeratePipe(void* pContext, BYTE* pUserDefined, PVMBUS_DEVICE_INTERFACE_DETAIL_DATA pDeviceInterfaceDetailData, char* arg4)
+void CALLBACK VmbusPipeClientEnumeratePipe(void* pContext, BYTE* pUserDefined, PVMBUS_DEVICE_INTERFACE_DETAIL_DATA pDeviceInterfaceDetailData, char* arg4)
 {
 	char* VmBusStringA = NULL;
 	WCHAR* VmBusStringW = NULL;
@@ -20,7 +20,7 @@ void VmbusPipeClientEnumeratePipe(void* pContext, BYTE* pUserDefined, PVMBUS_DEV
 	/**
 	 * pUserDefined: 116-byte UserDefined registry key
 	 *
-	 * pDeviceInterfaceDetailData: pointer to SP_DEVICE_INTERFACE_DETAIL_DATA (526-byte)
+	 * pDeviceInterfaceDetailData: pointer to SP_DEVICE_INTERFACE_DETAIL_DATA (526 bytes)
 	 * http://msdn.microsoft.com/en-us/library/windows/hardware/ff552343/
 	 */
 
@@ -36,9 +36,11 @@ void VmbusPipeClientEnumeratePipe(void* pContext, BYTE* pUserDefined, PVMBUS_DEV
 	log.Write("\tpDeviceInterfaceDetailData: cbSize: %d DevicePath: %s",
 		pDeviceInterfaceDetailData->cbSize, VmBusStringA);
 
-	log.Write("\targ4: %p", arg4);
+	log.Write("\targ4 before: %p / 0x%04X / %s", arg4, *arg4, arg4);
 
 	pfnVmbusPipeClientEnumeratePipe(pContext, pUserDefined, pDeviceInterfaceDetailData, arg4);
+
+	log.Write("\targ4 after: %p / 0x%04X / %s", arg4, *arg4, arg4);
 
 	free(pUserDefinedString);
 	free(VmBusStringA);

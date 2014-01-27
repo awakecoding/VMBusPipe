@@ -169,7 +169,7 @@ int ConvertFromUnicode(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int 
         return status;
 }
 
-void VmbusPipeClientEnumeratePipe(void* pContext, BYTE* pUserDefined, PVMBUS_DEVICE_INTERFACE_DETAIL_DATA pDeviceInterfaceDetailData, char* arg4)
+void CALLBACK VmbusPipeClientEnumeratePipe(void* pContext, BYTE* pUserDefined, PVMBUS_DEVICE_INTERFACE_DETAIL_DATA pDeviceInterfaceDetailData, char* arg4)
 {
 	HANDLE hChannel;
 	char* VmBusStringA = NULL;
@@ -266,7 +266,7 @@ int test_VmBusPipeHost(VmBusPipeHost* host)
 
 int test_VmBusPipeGuest(VmBusPipeGuest* guest)
 {
-	int status;
+	//int status;
 	BOOL bSuccess;
 	HANDLE hChannel;
 	DWORD dwFlagsAndAttributes;
