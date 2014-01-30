@@ -135,7 +135,7 @@ void CLogFile::OpenFile(LPCTSTR strFile, bool bAppend, long lTruncate)
 
 	if (_tcslen(strFile) > 3 && strFile[1] != ':')
 	{
-		::GetModuleFileName(NULL, szFile, MAX_PATH);
+		GetModuleFileName(NULL, szFile, MAX_PATH);
 		
 		long llength = (long) _tcslen(szFile);
 		TCHAR* pcat = szFile + (llength - 1);

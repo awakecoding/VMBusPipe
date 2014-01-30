@@ -31,6 +31,9 @@ DEFINE_GUID(GUID_VMBUS_PIPE_TEST, 0x1dae6e2c, 0xd5ef, 0x4085, 0x8c, 0x3c, 0x0, 0
 
 //DEFINE_GUID(GUID_VMBUS_, 0x, 0x, 0x, 0x, 0x, 0x, 0x, 0x, 0x, 0x, 0x);
 
+// {7563c5a0-025e-4a49-ad24-df8341a577bd} "Windows Server 2012 R2" Virtual Machine Id
+DEFINE_GUID(GUID_VIRTUAL_MACHINE_ID, 0x7563c5a0, 0x025e, 0x4a49, 0xad, 0x24, 0xdf, 0x83, 0x41, 0xa5, 0x77, 0xbd);
+
 void HexDump(BYTE* data, int length)
 {
 	BYTE* p = data;
@@ -169,7 +172,7 @@ int ConvertFromUnicode(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int 
         return status;
 }
 
-void CALLBACK VmbusPipeClientEnumeratePipe(void* pContext, BYTE* pUserDefined, PVMBUS_DEVICE_INTERFACE_DETAIL_DATA pDeviceInterfaceDetailData, char* arg4)
+static void VMBUSAPI VmbusPipeClientEnumeratePipe(void* pContext, BYTE* pUserDefined, PVMBUS_DEVICE_INTERFACE_DETAIL_DATA pDeviceInterfaceDetailData, const GUID* pGuid)
 {
 	HANDLE hChannel;
 	char* VmBusStringA = NULL;
@@ -196,7 +199,11 @@ void CALLBACK VmbusPipeClientEnumeratePipe(void* pContext, BYTE* pUserDefined, P
 	printf("\tpDeviceInterfaceDetailData: cbSize: %d DevicePath: %s\n",
 		pDeviceInterfaceDetailData->cbSize, VmBusStringA);
 
-	printf("\targ4: %p\n", arg4);
+	printf("\tpGuid: {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
+		pGuid->Data1, pGuid->Data2, pGuid->Data3,
+		pGuid->Data4[0], pGuid->Data4[1],
+		pGuid->Data4[2], pGuid->Data4[3], pGuid->Data4[4],
+		pGuid->Data4[5], pGuid->Data4[6], pGuid->Data4[7]);
 
 	free(pUserDefinedString);
 	free(VmBusStringA);
@@ -219,7 +226,7 @@ int test_VmBusPipeHost(VmBusPipeHost* host)
 	BOOL bSuccess;
 	HANDLE hChannel;
 	DWORD dwFlagsAndAttributes;
-	PVMBUS_DEVICE_INTERFACE_DETAIL_DATA pDeviceInterfaceDetailData;
+	PVMBUS_CHANNEL_INFO pVmChannelInfo;
 
 	printf("VmBusPipeHost: %d\n", host ? 1 : 0);
 
@@ -228,19 +235,20 @@ int test_VmBusPipeHost(VmBusPipeHost* host)
 	 * VmbusPipeServerConnectPipe
 	 */ 
 
-	pDeviceInterfaceDetailData = (PVMBUS_DEVICE_INTERFACE_DETAIL_DATA) malloc(sizeof(VMBUS_DEVICE_INTERFACE_DETAIL_DATA));
-	ZeroMemory(pDeviceInterfaceDetailData, sizeof(VMBUS_DEVICE_INTERFACE_DETAIL_DATA));
-	pDeviceInterfaceDetailData->cbSize = 8;
+	pVmChannelInfo = (PVMBUS_CHANNEL_INFO) malloc(sizeof(VMBUS_CHANNEL_INFO));
+	ZeroMemory(pVmChannelInfo, sizeof(VMBUS_CHANNEL_INFO));
 
 	bSuccess = host->VmbusPipeClientEnumeratePipes(&GUID_VMBUS_REMOTE_DESKTOP_VIRTUALIZATION,
 		g_VmBusPipeContext, VmbusPipeClientEnumeratePipe);
 
 	printf("VmbusPipeClientEnumeratePipes: %d\n", bSuccess);
 
-	dwFlagsAndAttributes = 0;
 	hChannel = NULL;
+	dwFlagsAndAttributes = 0x40000000;
 
-	status = host->VmbusPipeServerOfferChannel(pDeviceInterfaceDetailData, dwFlagsAndAttributes, &hChannel);
+	CopyMemory(&(pVmChannelInfo->VirtualMachineId), &GUID_VIRTUAL_MACHINE_ID, sizeof(GUID));
+
+	status = host->VmbusPipeServerOfferChannel(pVmChannelInfo, dwFlagsAndAttributes, &hChannel);
 
 	printf("VmbusPipeServerOfferChannel: %d\n", status);
 
@@ -270,7 +278,7 @@ int test_VmBusPipeGuest(VmBusPipeGuest* guest)
 	BOOL bSuccess;
 	HANDLE hChannel;
 	DWORD dwFlagsAndAttributes;
-	PVMBUS_DEVICE_INTERFACE_DETAIL_DATA pDeviceInterfaceDetailData;
+	PVMBUS_CHANNEL_INFO pVmChannelInfo;
 
 	printf("VmBusPipeGuest: %d\n", guest ? 1 : 0);
 
@@ -281,9 +289,8 @@ int test_VmBusPipeGuest(VmBusPipeGuest* guest)
 	 * VmbusPipeClientEnumeratePipes
 	 */ 
 
-	pDeviceInterfaceDetailData = (PVMBUS_DEVICE_INTERFACE_DETAIL_DATA) malloc(sizeof(VMBUS_DEVICE_INTERFACE_DETAIL_DATA));
-	ZeroMemory(pDeviceInterfaceDetailData, sizeof(VMBUS_DEVICE_INTERFACE_DETAIL_DATA));
-	pDeviceInterfaceDetailData->cbSize = 8;
+	pVmChannelInfo = (PVMBUS_CHANNEL_INFO) malloc(sizeof(VMBUS_CHANNEL_INFO));
+	ZeroMemory(pVmChannelInfo, sizeof(VMBUS_CHANNEL_INFO));
 
 	bSuccess = guest->VmbusPipeClientEnumeratePipes(&GUID_VMBUS_REMOTE_DESKTOP_VIRTUALIZATION,
 		g_VmBusPipeContext, VmbusPipeClientEnumeratePipe);
