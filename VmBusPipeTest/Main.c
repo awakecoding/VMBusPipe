@@ -34,6 +34,9 @@ DEFINE_GUID(GUID_VMBUS_PIPE_TEST, 0x1dae6e2c, 0xd5ef, 0x4085, 0x8c, 0x3c, 0x0, 0
 // {7563c5a0-025e-4a49-ad24-df8341a577bd} "Windows Server 2012 R2" Virtual Machine Id
 DEFINE_GUID(GUID_VIRTUAL_MACHINE_ID, 0x7563c5a0, 0x025e, 0x4a49, 0xad, 0x24, 0xdf, 0x83, 0x41, 0xa5, 0x77, 0xbd);
 
+// {3ed8401b-88a1-409a-9cd6-a0f83ae83c81} "Ubuntu 13.10" Virtual Machine Id
+DEFINE_GUID(GUID_VM_UBUNTU, 0x3ed8401b, 0x88a1, 0x409a, 0x9c, 0xd6, 0xa0, 0xf8, 0x3a, 0xe8, 0x3c, 0x81);
+
 void HexDump(BYTE* data, int length)
 {
 	BYTE* p = data;
@@ -246,7 +249,8 @@ int test_VmBusPipeHost(VmBusPipeHost* host)
 	hChannel = NULL;
 	dwFlagsAndAttributes = 0x40000000;
 
-	CopyMemory(&(pVmChannelInfo->VirtualMachineId), &GUID_VIRTUAL_MACHINE_ID, sizeof(GUID));
+	CopyMemory(&(pVmChannelInfo->VirtualMachineGuid), &GUID_VIRTUAL_MACHINE_ID, sizeof(GUID));
+	CopyMemory(&(pVmChannelInfo->VirtualMachineGuid), &GUID_VM_UBUNTU, sizeof(GUID));
 
 	status = host->VmbusPipeServerOfferChannel(pVmChannelInfo, dwFlagsAndAttributes, &hChannel);
 

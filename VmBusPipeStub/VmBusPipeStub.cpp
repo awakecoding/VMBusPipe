@@ -116,35 +116,65 @@ HANDLE VMBUSAPI VmbusPipeClientOpenChannel(PVMBUS_DEVICE_INTERFACE_DETAIL_DATA p
 	return hChannel;
 }
 
-void VMBUSAPI VmbusPipeClientReadyForChannelNotification(void* arg1, int flags)
+void VMBUSAPI VmbusPipeClientReadyForChannelNotification(VMBUS_CHANNEL_NOTIFICATION* pChannelNotification, BOOL bEnumeratePipes)
 {
 	log.Write("<VmbusPipeClientReadyForChannelNotification>");
+
+	DWORD test = WM_CREATE;
 
 	if (!guest || !guest->VmbusPipeClientReadyForChannelNotification)
 		return;
 
-	guest->VmbusPipeClientReadyForChannelNotification(arg1, flags);
+	guest->VmbusPipeClientReadyForChannelNotification(pChannelNotification, bEnumeratePipes);
 
 	log.Write("</VmbusPipeClientReadyForChannelNotification>");
 }
 
-LPVOID VMBUSAPI VmbusPipeClientRegisterChannelNotification(void* arg1, void* arg2, int arg3, int arg4, int arg5)
+VMBUS_CHANNEL_NOTIFICATION* VMBUSAPI VmbusPipeClientRegisterChannelNotification(GUID* ClassGuid, GUID* Guid2,
+				DWORD notificationFlags, fnVmbusPipeClientChannelNotification pfnDispatchCallback, void* pDispatchContext)
 {
-	LPVOID lptr;
+	GUID* pGuid;
+	VMBUS_CHANNEL_NOTIFICATION* pChannelNotification;
 
 	log.Write("<VmbusPipeClientRegisterChannelNotification>");
 
 	if (!guest || !guest->VmbusPipeClientRegisterChannelNotification)
 		return NULL;
 
-	lptr = guest->VmbusPipeClientRegisterChannelNotification(arg1, arg2, arg3, arg4, arg5);
+	pGuid = ClassGuid;
+
+	log.Write("\tpClassGuid: {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+		pGuid->Data1, pGuid->Data2, pGuid->Data3,
+		pGuid->Data4[0], pGuid->Data4[1],
+		pGuid->Data4[2], pGuid->Data4[3], pGuid->Data4[4],
+		pGuid->Data4[5], pGuid->Data4[6], pGuid->Data4[7]);
+
+	pGuid = Guid2;
+
+	log.Write("\tpGuid2: {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+		pGuid->Data1, pGuid->Data2, pGuid->Data3,
+		pGuid->Data4[0], pGuid->Data4[1],
+		pGuid->Data4[2], pGuid->Data4[3], pGuid->Data4[4],
+		pGuid->Data4[5], pGuid->Data4[6], pGuid->Data4[7]);
+
+	log.Write("\tnotificationFlags: 0x%04X", notificationFlags);
+
+	log.Write("\tpfnDispatchCallback: %p pDispatchContext: %p", pfnDispatchCallback, pDispatchContext);
+
+	/**
+	 * Using Device Interfaces:
+	 * http://msdn.microsoft.com/en-us/library/windows/hardware/ff545432/
+	 */
+
+	pChannelNotification = guest->VmbusPipeClientRegisterChannelNotification(ClassGuid, Guid2, notificationFlags,
+		pfnDispatchCallback, pDispatchContext);
 
 	log.Write("</VmbusPipeClientRegisterChannelNotification>");
 
-	return lptr;
+	return pChannelNotification;
 }
 
-int VMBUSAPI VmbusPipeClientUnregisterChannelNotification(LPVOID arg1, int arg2)
+int VMBUSAPI VmbusPipeClientUnregisterChannelNotification(VMBUS_CHANNEL_NOTIFICATION* pChannelNotification, BOOL bWait)
 {
 	int status;
 
@@ -153,15 +183,18 @@ int VMBUSAPI VmbusPipeClientUnregisterChannelNotification(LPVOID arg1, int arg2)
 	if (!guest || !guest->VmbusPipeClientUnregisterChannelNotification)
 		return -1;
 
-	status = guest->VmbusPipeClientUnregisterChannelNotification(arg1, arg2);
+	log.Write("\tbWait: %d", bWait);
+
+	status = guest->VmbusPipeClientUnregisterChannelNotification(pChannelNotification, bWait);
 
 	log.Write("</VmbusPipeClientUnregisterChannelNotification>");
 
 	return status;
 }
 
-BOOL VMBUSAPI VmbusPipeClientWaitChannel(int arg1, int arg2, int arg3, UINT_PTR param)
+BOOL VMBUSAPI VmbusPipeClientWaitChannel(GUID* pGuid1, DWORD arg2, DWORD uElapse, UINT_PTR param)
 {
+	GUID* pGuid;
 	BOOL bSuccess;
 
 	log.Write("<VmbusPipeClientWaitChannel>");
@@ -169,7 +202,17 @@ BOOL VMBUSAPI VmbusPipeClientWaitChannel(int arg1, int arg2, int arg3, UINT_PTR 
 	if (!guest || !guest->VmbusPipeClientWaitChannel)
 		return FALSE;
 
-	bSuccess = guest->VmbusPipeClientWaitChannel(arg1, arg2, arg3, param);
+	pGuid = pGuid1;
+
+	log.Write("\tpGuid1: {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+		pGuid->Data1, pGuid->Data2, pGuid->Data3,
+		pGuid->Data4[0], pGuid->Data4[1],
+		pGuid->Data4[2], pGuid->Data4[3], pGuid->Data4[4],
+		pGuid->Data4[5], pGuid->Data4[6], pGuid->Data4[7]);
+
+	log.Write("\targ2: 0x%4X uElapse: 0x%04X param: 0x%04X\n", arg2, uElapse, param);
+
+	bSuccess = guest->VmbusPipeClientWaitChannel(pGuid1, arg2, uElapse, param);
 
 	log.Write("</VmbusPipeClientWaitChannel>");
 
@@ -207,7 +250,7 @@ int VMBUSAPI VmbusPipeServerOfferChannel(PVMBUS_CHANNEL_INFO pVmbusChannelInfo, 
 	if (!guest || !guest->VmbusPipeServerOfferChannel)
 		return -1;
 
-	pGuid = &(pVmbusChannelInfo->VirtualMachineId);
+	pGuid = &(pVmbusChannelInfo->VirtualMachineGuid);
 	pBufferString = BinToHexString((BYTE*) pVmbusChannelInfo->UserDefined, 116);
 
 	log.Write("\tpGuid: {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
@@ -216,30 +259,32 @@ int VMBUSAPI VmbusPipeServerOfferChannel(PVMBUS_CHANNEL_INFO pVmbusChannelInfo, 
 		pGuid->Data4[2], pGuid->Data4[3], pGuid->Data4[4],
 		pGuid->Data4[5], pGuid->Data4[6], pGuid->Data4[7]);
 
-	pGuid = (GUID*) &(pVmbusChannelInfo->field_14);
+	/**
+	 * GUID Present on the Hyper-V Host:
+	 * {cfa8b69e-5b4a-4cc0-b98b-8ba1a1f3f95a} Interface Type?
+	 * HKEY_LOCAL_MACHINE\SYSTEM\DriverDatabase\DeviceIds\VMBUS\{CFA8B69E-5B4A-4cc0-B98B-8BA1A1F3F95A}
+	 */
 
-	log.Write("\tPOSSIBLE pGuid1: {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+	pGuid = (GUID*) &(pVmbusChannelInfo->InterfaceTypeGuid);
+
+	log.Write("\tInterfaceTypeGuid: {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
 		pGuid->Data1, pGuid->Data2, pGuid->Data3,
 		pGuid->Data4[0], pGuid->Data4[1],
 		pGuid->Data4[2], pGuid->Data4[3], pGuid->Data4[4],
 		pGuid->Data4[5], pGuid->Data4[6], pGuid->Data4[7]);
 
-	pGuid = (GUID*) &(pVmbusChannelInfo->field_24);
+	/**
+	 * GUID Present on the Hyper-V Guest:
+	 * {58f75a6d-d949-4320-99e1-a2a2576d581c} Interface Instance?
+	 */
 
-	log.Write("\tPOSSIBLE pGuid2: {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+	pGuid = (GUID*) &(pVmbusChannelInfo->InterfaceInstanceGuid);
+
+	log.Write("\tInterfaceInstanceGuid: {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
 		pGuid->Data1, pGuid->Data2, pGuid->Data3,
 		pGuid->Data4[0], pGuid->Data4[1],
 		pGuid->Data4[2], pGuid->Data4[3], pGuid->Data4[4],
 		pGuid->Data4[5], pGuid->Data4[6], pGuid->Data4[7]);
-
-	log.Write("\t field_14: 0x%04X field_18: 0x%04X field_1C: 0x%04X",
-		pVmbusChannelInfo->field_14, pVmbusChannelInfo->field_18, pVmbusChannelInfo->field_1C);
-
-	log.Write("\t field_20: 0x%04X field_24: 0x%04X field_28: 0x%04X",
-		pVmbusChannelInfo->field_20, pVmbusChannelInfo->field_24, pVmbusChannelInfo->field_28);
-
-	log.Write("\t field_2C: 0x%04X field_30: 0x%04X field_38: 0x%04X",
-		pVmbusChannelInfo->field_2C, pVmbusChannelInfo->field_30, pVmbusChannelInfo->field_38);
 
 	log.Write("\tunknown01: 0x%04X flags3A: 0x%04X",
 		pVmbusChannelInfo->unknown01, pVmbusChannelInfo->flags3A);
