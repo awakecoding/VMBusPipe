@@ -1,5 +1,5 @@
 
-add_library(VMBusPipe STATIC
+add_library(VMBusPipeCore STATIC
 	VmBusPipe.c
 	VmBusPipe.h
 	VmBusPipeGuest.c
