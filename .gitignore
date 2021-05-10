@@ -1,9 +1,13 @@
 Debug/
 Release/
+.vs/
+build/
 
 *.sdf
 *.suo
 *.user
 *.filters
 *.opensdf
+*.vcxproj
+*.sln
 

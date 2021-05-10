@@ -96,6 +96,9 @@ char* BinToHexString(BYTE* data, int length)
 
 	p = (char*) malloc((length + 1) * 2);
 
+	if (!p)
+		return NULL;
+
 	for (i = 0; i < length; i++)
 	{
 		ln = data[i] & 0xF;
@@ -114,6 +117,9 @@ char* BinToHexString(BYTE* data, int length)
 CLogFile::CLogFile()
 {
 	m_enabled = true;
+	m_lTruncate = 0;
+	m_pLogFile = NULL;
+	ZeroMemory(m_filename, sizeof(m_filename));
 }
 
 CLogFile::~CLogFile()
@@ -122,23 +128,23 @@ CLogFile::~CLogFile()
 		CloseFile();
 }
 
-void CLogFile::OpenFile(LPCTSTR strFile, bool bAppend, long lTruncate)
+void CLogFile::OpenFile(const char* strFile, bool bAppend, long lTruncate)
 {
 	m_lTruncate = lTruncate;
 
 	if (!m_enabled)
 		return;
 
-	memcpy(m_filename, strFile, _tcslen(strFile));
+	memcpy(m_filename, strFile, strlen(strFile));
 
-	TCHAR szFile[MAX_PATH + 1];
+	char szFile[MAX_PATH + 1];
 
-	if (_tcslen(strFile) > 3 && strFile[1] != ':')
+	if (strlen(strFile) > 3 && strFile[1] != ':')
 	{
-		GetModuleFileName(NULL, szFile, MAX_PATH);
+		GetModuleFileNameA(NULL, szFile, MAX_PATH);
 		
-		long llength = (long) _tcslen(szFile);
-		TCHAR* pcat = szFile + (llength - 1);
+		long llength = (long) strlen(szFile);
+		char* pcat = szFile + (llength - 1);
 
 		while (llength--)
 		{
@@ -151,16 +157,16 @@ void CLogFile::OpenFile(LPCTSTR strFile, bool bAppend, long lTruncate)
 		if (*pcat == '\\')
 		{
 			pcat++;
-			_tcscpy(pcat, strFile);
+			strcpy(pcat, strFile);
 		}
 		else
 		{
-			_tcscpy(szFile, strFile);
+			strcpy(szFile, strFile);
 		}
 	}
 	else
 	{
-		_tcscpy(szFile, strFile);
+		strcpy(szFile, strFile);
 	}
 
 	m_pLogFile = fopen(szFile, bAppend ? "a" : "w");
@@ -187,7 +193,7 @@ void CLogFile::CloseFile()
 	DeleteCriticalSection(&m_cs);
 }
 
-void CLogFile::CreateDirectories(LPCTSTR filename)
+void CLogFile::CreateDirectories(const char* filename)
 {
 	char drivename[4];
 	char path[MAX_PATH + 1];
@@ -218,7 +224,7 @@ void CLogFile::CreateDirectories(LPCTSTR filename)
 	}
 }
 
-void CLogFile::Write(LPCTSTR pszFormat, ...)
+void CLogFile::Write(const char* pszFormat, ...)
 {
 	if (!m_enabled)
 		return;
@@ -228,7 +234,7 @@ void CLogFile::Write(LPCTSTR pszFormat, ...)
 
 	EnterCriticalSection(&m_cs);
 	
-	TCHAR szLog[4096];
+	char szLog[4096];
 	va_list argList;
 	va_start(argList, pszFormat);
 	vsprintf(szLog, pszFormat, argList);
@@ -236,7 +242,7 @@ void CLogFile::Write(LPCTSTR pszFormat, ...)
 
 	SYSTEMTIME time;
 	::GetLocalTime(&time);
-	TCHAR szLine[256];
+	char szLine[256];
 
 	sprintf(szLine, "%04d/%02d/%02d %02d:%02d:%02d: %s\n",
 		time.wYear, time.wMonth, time.wDay,

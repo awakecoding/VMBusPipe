@@ -5,7 +5,7 @@
 
 #include <windows.h>
 
-#include <VmBusPipe.h>
+#include "VmBusPipe.h"
 
 struct _VmBusPipeContext
 {
@@ -220,7 +220,7 @@ static void VMBUSAPI VmbusPipeClientEnumeratePipe(void* pContext, BYTE* pUserDef
 		hChannel = vmbus->host->VmbusPipeClientOpenChannel(pDeviceInterfaceDetailData, 0x40000000);
 	}
 
-	printf("VmbusPipeClientOpenChannel: 0x%04X\n", hChannel);
+	printf("VmbusPipeClientOpenChannel: 0x%04X\n", (unsigned int) (size_t) hChannel);
 }
 
 int test_VmBusPipeHost(VmBusPipeHost* host)

@@ -23,13 +23,13 @@ public:
 	CLogFile();
 	~CLogFile();
 
-	void OpenFile(LPCTSTR strFile, bool bAppend = TRUE, long lTruncate = 16384);
+	void OpenFile(const char* strFile, bool bAppend = TRUE, long lTruncate = 16384);
 	void CloseFile();
 
-	void Write(LPCTSTR pszFormat, ...);
+	void Write(const char* pszFormat, ...);
 
 private:
-	void CreateDirectories(LPCTSTR filename);
+	void CreateDirectories(const char* filename);
 
 	bool m_enabled;
 	FILE* m_pLogFile;
